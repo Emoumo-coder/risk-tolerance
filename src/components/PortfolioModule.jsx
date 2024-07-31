@@ -14,20 +14,34 @@ const PortfolioModule = () => {
   const [error, setError] = useState(null); // Error state
 
   useEffect(() => {
+    const baseUrl = process.env.REACT_APP_API_BASE_URL;
+
     // Fetch the risk data from the backend API
-    fetch('http://127.0.0.1:5000/api/portfolios')
+    fetch(`${baseUrl}/portfolios`)
       .then((response) => {
         if (!response.ok) {
-          throw new Error('Network response was not ok');
+          throw new Error(`HTTP error! Status: ${response.status}`);
         }
+
+        // Check if the response is in JSON format
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          throw new TypeError("Received non-JSON response");
+        }
+
         return response.json();
       })
       .then((data) => {
-        setAllRiskData(data);
-        setRiskData(data[0]); // Set initial risk data
+        if (Array.isArray(data) && data.length > 0) {
+          setAllRiskData(data);
+          setRiskData(data[0]); // Assuming you want to set the first item as the initial risk data
+        } else {
+          throw new Error("No data received or data format is incorrect");
+        }
         setLoading(false);
       })
       .catch((error) => {
+        console.error("Error fetching data:", error);
         setError(error.message);
         setLoading(false);
       });
