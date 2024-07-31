@@ -16,6 +16,8 @@ const PortfolioModule = () => {
   useEffect(() => {
     const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
+    console.log(baseUrl);
+
     // Fetch the risk data from the backend API
     fetch(`${baseUrl}/portfolios`)
       .then((response) => {
