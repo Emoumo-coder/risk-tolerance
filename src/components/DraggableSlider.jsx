@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const DraggableSlider = ({riskToleranceHandler}) => {
+const DraggableSlider = ({ riskToleranceHandler }) => {
   const [position, setPosition] = useState(0); // Initial position at 0%
   const sliderRef = useRef(null);
 
@@ -17,11 +17,29 @@ const DraggableSlider = ({riskToleranceHandler}) => {
       }
     };
 
+    const handleTouchMove = (event) => {
+      if (sliderRef.current) {
+        const sliderWidth = sliderRef.current.offsetWidth;
+        const touch = event.touches[0];
+        const newLeft = Math.min(
+          Math.max(0, touch.clientX - sliderRef.current.getBoundingClientRect().left),
+          sliderWidth
+        );
+        const newPosition = newLeft / sliderWidth * 100;
+        setPosition(newPosition); // Convert to percentage
+      }
+    };
+
     const handleMouseUp = () => {
-      // Only call riskToleranceHandler when the user releases the mouse button
-      riskToleranceHandler(Math.round(position / 10)); 
+      riskToleranceHandler(Math.round(position / 10));
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    const handleTouchEnd = () => {
+      riskToleranceHandler(Math.round(position / 10));
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
     };
 
     if (sliderRef.current) {
@@ -29,19 +47,26 @@ const DraggableSlider = ({riskToleranceHandler}) => {
         document.addEventListener('mousemove', handleMouseMove);
         document.addEventListener('mouseup', handleMouseUp);
       });
+
+      sliderRef.current.addEventListener('touchstart', (event) => {
+        document.addEventListener('touchmove', handleTouchMove);
+        document.addEventListener('touchend', handleTouchEnd);
+      });
     }
 
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
     };
   }, [position, riskToleranceHandler]);
 
   const sliderPosition = Math.round(position / 10) * 10; // Snap to nearest 10%
 
   return (
-    <div className="w-[683px] md:w-[300px] flex-shrink-0">
-      <div className="w-[310px] space-y-4 rounded-lg bg-white p-6 xs:w-[345px] md:w-[448px]">
+    <div className="w-full md:w-[300px] flex-shrink-0">
+      <div className="w-full space-y-4 rounded-lg bg-white p-6 xs:w-[345px] md:w-[448px]">
         <div className="flex justify-between">
           <div className="font-bold" aria-atomic="true" aria-live="polite">
             Risk score: {sliderPosition / 10}
